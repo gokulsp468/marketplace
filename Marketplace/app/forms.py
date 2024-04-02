@@ -1,13 +1,12 @@
-
-from django.contrib.auth.models import User
 from django import forms
 from django.contrib.auth.forms import UserCreationForm
-from django.core.exceptions import ValidationError
+from .models import CustomUser
 
-class CreateUser(UserCreationForm):
-    
+
+
+class CustomUserCreationForm(UserCreationForm):
     class Meta:
-        model = User
-        fields = ['first_name', 'last_name', 'email', 'password1', 'password2']
+        model = CustomUser
+        fields = ['first_name', 'last_name', 'email', 'user_type', 'password1', 'password2']
 
 

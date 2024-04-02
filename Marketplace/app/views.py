@@ -4,21 +4,19 @@ from . import forms
 from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login ,logout
 from django.contrib import messages
-
+from . import models
 # Create your views here.
-def index(request):
-    
-    signup_form = forms.CreateUser()
-    return render(request, 'login.html',{'signup_form':signup_form})
+
 
 def DashBoard(request):
+    
     return render(request, 'dashboard.html' ,{'user':request.user})
     
 def SignUp(request):
     
     if request.method == 'POST':
         
-        form = forms.CreateUser(request.POST)
+        form = forms.CustomUserCreationForm(request.POST)
        
         if form.is_valid():
             try:
@@ -28,13 +26,13 @@ def SignUp(request):
                 user.username = form.cleaned_data['first_name'] + form.cleaned_data['last_name']
                 form.save()
                 
-                return redirect('index')
+                return redirect('signUp')
             except Exception as e:
                 print(e)
         else:
             return render(request, 'login.html',{'signUp_form':form})
     else:
-        form = forms.CreateUser()
+        form = forms.CustomUserCreationForm()
     return render(request, 'login.html',{'signUp_form':form})
 
 def LoginUsr(request):
@@ -55,4 +53,4 @@ def LoginUsr(request):
 
 def logout_view(request):
     logout(request)
-    return redirect('index')
+    return redirect('signUp')
