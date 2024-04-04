@@ -1,5 +1,159 @@
 {% extends "index.html" %}
-
+ {% load static %}
 {% block content %}
+
+
+{% for message in messages %}
+{% if message.tags == 'error' %}
+    <div  class='tst toaster_error'>{{ message }} <img name='tst' src="{% static "images/cancel.png" %} " width='20px'> </div>
+{% elif message.tags == 'success'  %}
+<div  class='tst toaster_success'>{{ message }} <img name='tst' src="{% static "images/cancel.png" %}" width='20px'></div>
+{% endif %}
+{% endfor %}
+
 <h1 class='text-center'>welcome {{user}}</h1>
+
+
+<div class='container mt-5'>
+<table class="table table-striped ">
+  <thead class='thead-dark'>
+    <tr>
+
+      <th scope="col">SI NO:</th>
+
+      <th scope="col">Title</th>
+      <th scope="col">Description</th>
+      <th scope="col">Price</th>
+      <th scope="col">Image</th>
+      {% if user.user_type == 'seller' %}
+      <th scope="col" colspan="2">Action</th>
+      {% endif %}
+
+
+    </tr>
+  </thead>
+  <tbody>
+    {% for product in product_list %}
+    <tr>
+      <td>{{ forloop.counter }}</td>
+      <td>{{ product.product_title }}</td>
+      <td>{{ product.product_description }}</td>
+      <td>{{ product.product_price }}</td>
+      <td><img src="{{ product.product_image.url }}" alt="{{ product.product_title }}" width="100"></td>
+
+
+      {% if user.user_type == 'seller' %}
+      <td ><a href='' data-bs-toggle="modal" data-bs-target="#editproduct{{product.id}}">
+
+  <img src="{% static "images/edit.svg" %}"></a>
+  <div class="modal fade" id="editproduct{{product.id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form method='post' enctype="multipart/form-data" action="{% url 'edit_product' product.id %}">
+        {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Products</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          <div class="mb-3">
+            <label  class="form-label">Product Title</label>
+            <input type="text" class="form-control" name='product_title' value="{{product.product_title}}">
+            
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <input type="text" class="form-control" name='product_description' value="{{ product.product_description}}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Price</label>
+            <input type="text" class="form-control" name='product_price' value="{{  product.product_price }}">
+          </div>
+          <div class="mb-3">
+            <img src="{{ product.product_image.url }}" alt="{{ product.product_title }}" width="100">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">image</label>
+            <input type="file" class="form-control" name='product_image'>
+          </div>
+          
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save changes</button>
+        </div>
+      </div>
+    </form>
+    </div>
+  </div>
+      </td>
+
+
+
+      <td> <a data-bs-toggle="modal" data-bs-target="#deleteproduct{{product.id}}"><img src="{% static "images/delete.png" %}"></a>
+
+        <!-- Modal -->
+<div class="modal fade" id="deleteproduct{{product.id}}" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <form method='post'  action="{% url 'delete_product' product.id %}">
+      {% csrf_token %}
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Delete Product</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+        Are you sure you want to delete {{product.product_title}}?
+      </div>
+      <div class="modal-footer">
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <button type="submit" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </form>
+  </div>
+</div>
+        
+      
+      
+      
+      </td>
+      {% endif %}
+    </tr>
+    {% endfor %}
+   
+  </tbody>
+</table>
+
+</div>
+
+
+
+
+
+
+
+
+
+
+<div class="modal fade" id="AddProductModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+      <form method='post' enctype="multipart/form-data" action="{% url 'add_product' %}">
+        {% csrf_token %}
+      <div class="modal-content">
+        <div class="modal-header">
+          <h1 class="modal-title fs-5" id="exampleModalLabel">Add Product</h1>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+          {{add_product_form}}
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+          <button type="submit" class="btn btn-primary">Save</button>
+        </div>
+      </div>
+    </form>
+    </div>
+  </div>
 {% endblock%}

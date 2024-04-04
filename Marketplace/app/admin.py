@@ -3,3 +3,4 @@ from . import models
 # Register your models here.
 admin.site.register(models.CustomUser)
 admin.site.register(models.Products)
+admin.site.register(models.APILog)

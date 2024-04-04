@@ -1,0 +1,32 @@
+.toaster_success{
+    color: white;
+    background-color: green;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    z-index: 10000;
+    height: 50px;
+    border-radius: 15px;
+    
+    justify-content: space-around;
+    display: flex;
+    align-items: center;
+
+}
+
+.toaster_error {
+    color: white;
+    background-color: red;
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 300px;
+    z-index: 10000;
+    height: 50px;
+    border-radius: 15px;
+    justify-content: space-around;
+    display: flex;
+    align-items: center;
+
+}

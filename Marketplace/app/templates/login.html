@@ -9,7 +9,9 @@
 	<meta name="viewport" content="width=device-width, initial-scale=1.0" />
 
 	<script src="https://kit.fontawesome.com/64d58efce2.js" crossorigin="anonymous"></script>
-	<link rel="stylesheet" href="{% static '/css/login.css' %}" />
+	
+	<link rel="stylesheet" href="{% static 'css/login.css' %}" />
+	<link rel="stylesheet" href="{% static 'css/toast.css' %}" />
 	<title>Sign in & Sign up Form</title>
 </head>
 
@@ -26,7 +28,9 @@
 
   {% for message in messages %}
   {% if message.tags == 'error' %}
-      <div class='toaster'>{{ message }}</div>
+      <div  class='tst toaster_error'>{{ message }} <img name='tst' src="{% static "images/cancel.png" %} " width='20px'> </div>
+  {% elif message.tags == 'success'  %}
+  <div  class='tst toaster_success'>{{ message }} <img name='tst' src="{% static "images/cancel.png" %}" width='20px'></div>
   {% endif %}
 {% endfor %}
 
@@ -173,22 +177,7 @@
     .errorlist{
         color:red;
     }
-
-    .toaster {
-        color: white;
-        background-color: red;
-        position: fixed;
-        top: 20px;
-        right: 20px;
-        width: 300px;
-        z-index: 10000;
-        height: 50px;
-        border-radius: 15px;
-        justify-content: center;
-        display: flex;
-        align-items: center;
-    
-    }
+	
 </style>
 	<script>
         const sign_in_btn = document.querySelector("#sign-in-btn");
@@ -201,10 +190,17 @@ sign_up_btn.addEventListener("click", () => {
 
 sign_in_btn.addEventListener("click", () => {
   container.classList.remove("sign-up-mode");
+  
 });
-    </script>
 
 
+
+
+
+
+</script>
+
+<script src="{% static 'js/toast.js' %}" ></script>
 
 
 </body>
