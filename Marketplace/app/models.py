@@ -12,6 +12,7 @@ class CustomUser(AbstractUser):
         ('customer', 'customer'), 
     )
     user_type = models.CharField(max_length=20, choices=USER_TYPE_CHOICES)
+    mobile_number = models.IntegerField(blank=True, null=True, default=None)
 
     
     objects = manager.CustomUserManager()
@@ -31,13 +32,3 @@ class Products(models.Model):
         ordering = ['id'] 
         
 
-class APILog(models.Model):
-    method = models.CharField(max_length=10)
-    path = models.CharField(max_length=255)
-    query_params = models.JSONField(null=True, blank=True)
-    response_data = models.TextField(null=True, blank=True)
-    status_code = models.IntegerField()
-    timestamp = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-        return f"{self.method} {self.path}"

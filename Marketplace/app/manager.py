@@ -4,15 +4,23 @@ from django.utils.translation import gettext as _
 class CustomUserManager(BaseUserManager):
  
 
-    def create_user(self, email, password, **extra_fields):
+   
+    def create_user(self, email, first_name, last_name, user_type, mobile_number, password=None, **extra_fields):
         if not email:
-            raise ValueError(_('Users must have an email address'))
+            raise ValueError('The Email field must be set')
         email = self.normalize_email(email)
-        user = self.model(email=email, **extra_fields)
+        user = self.model(
+            email=email,
+            first_name=first_name,
+            last_name=last_name,
+            user_type=user_type,
+            mobile_number=mobile_number,
+            **extra_fields
+        )
         user.set_password(password)
-        user.save()
+        user.save(using=self._db)
         return user
-
+    
     def create_superuser(self, email, password, **extra_fields):
         extra_fields.setdefault('is_staff', True)
         extra_fields.setdefault('is_superuser', True)

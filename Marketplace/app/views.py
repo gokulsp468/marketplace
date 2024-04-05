@@ -1,17 +1,16 @@
 from django.shortcuts import render,redirect
-from django.http import HttpResponse
 from . import forms
-from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login ,logout
 from django.contrib import messages
 from . import models
 from django.shortcuts import get_object_or_404
 from django.core.exceptions import ValidationError
-from django.contrib.postgres.search import SearchVector
 from django.db.models import Q
-
+from rest_framework.decorators import api_view
+from . import serializers
+from rest_framework import status
+from rest_framework.response import Response
 # Create your views here.
-
 
 def DashBoard(request):
     product_list = None

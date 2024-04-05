@@ -91,6 +91,13 @@
                     {% endif %}
 					</div>
 					<div class="input-field">
+						<i class="fas fa-envelope"></i>
+						<input type="number" name='mobile_number' placeholder="mobile_number" />
+                        {% if signUp_form.mobile_number.errors %}
+                        <p class="error">{{ signUp_form.mobile_number.errors }}</p>
+                    {% endif %}
+					</div>
+					<div class="input-field">
 						<i class="fas fa-lock"></i>
 						<input type="password" name='password1' placeholder="Password" />
                         {% if signUp_form.password1.errors %}
