@@ -26,3 +26,7 @@ class CustomUserSerializer(serializers.ModelSerializer):
         user.set_password(password)
         user.save()
         return user
+
+
+class OtpGenerationSerializer(serializers.Serializer):
+    phone_number = serializers.CharField(max_length=15) 
