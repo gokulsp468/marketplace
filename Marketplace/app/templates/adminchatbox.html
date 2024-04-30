@@ -1,0 +1,55 @@
+{% extends "index.html" %}
+{% load static %}
+{% block content %}
+
+
+
+
+<h1 class='text-center'>ChatBox</h1>
+
+
+<div class='container mt-5'>
+<table class="table table-striped ">
+ <thead class='thead-dark'>
+   <tr>
+
+     <th scope="col">SI NO:</th>
+
+     <th scope="col">Title</th>
+     
+
+
+   </tr>
+ </thead>
+ <tbody>
+   {% for chat in chats %}
+   <tr>
+     <td>{{ chat.user }}</td>
+     
+
+
+     <td ><a class='btn btn-info chat-btn' href='{% url "supportchat" chat.user %}' >chat
+
+ </a>
+
+
+
+     
+     </td>
+ 
+   </tr>
+   {% endfor %}
+  
+ </tbody>
+</table>
+
+</div>
+
+
+
+
+
+
+
+
+{% endblock%}

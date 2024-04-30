@@ -62,3 +62,15 @@ class CartProduct(models.Model):
 def remove_product_from_cart(sender, instance, **kwargs):
     if instance.quantity == 0:
         instance.delete()
+        
+        
+        
+class Chat(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE,null=True)
+    # Add other fields as needed
+
+class ChatMessage(models.Model):
+    chat = models.ForeignKey(Chat, on_delete=models.CASCADE,null=True)
+    sender = models.ForeignKey(CustomUser, on_delete=models.CASCADE,null=True)
+    text = models.TextField(null=True)
+    timestamp = models.DateTimeField(auto_now_add=True,null=True)

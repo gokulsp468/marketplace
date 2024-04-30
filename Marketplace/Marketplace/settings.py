@@ -36,6 +36,8 @@ ALLOWED_HOSTS = []
 # Application definition
 
 INSTALLED_APPS = [
+    'daphne',
+    'channels',
     'django.contrib.admin',
     'django.contrib.auth',
     'django.contrib.contenttypes',
@@ -48,6 +50,8 @@ INSTALLED_APPS = [
     'api',
     'paymentapp',
     'celery',
+     
+   
 ]
 
 MIDDLEWARE = [
@@ -61,6 +65,9 @@ MIDDLEWARE = [
     # 'api.middleware.ApiLogMiddleware'
    
 ]
+
+
+
 
 ROOT_URLCONF = 'Marketplace.urls'
 
@@ -80,6 +87,8 @@ TEMPLATES = [
     },
 ]
 
+
+ASGI_APPLICATION = "Marketplace.asgi.application"
 WSGI_APPLICATION = 'Marketplace.wsgi.application'
 
 
@@ -180,3 +189,41 @@ EMAIL_USE_TLS = True
 EMAIL_PORT = 587
 EMAIL_HOST_USER = 'gokul.s@spericorn.com'
 EMAIL_HOST_PASSWORD = 'ysnh sytz wzzi qtxh'
+
+
+LOGGING = {
+    'version':1,
+    'handlers': {
+        'console': {
+            'class': 'logging.StreamHandler',
+        },
+        'file': {
+            'class': 'logging.handlers.TimedRotatingFileHandler',
+            'filename': 'django_app.log',
+            'when': 'midnight',
+            'interval': 1,
+            'backupCount': 7,
+            'level': 'DEBUG',
+        },
+    },
+    'loggers': {
+        'django': {
+            'handlers': [ 'file'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    },
+}
+
+STRIPE_SECRET_KEY=os.environ.get('STRIPE_SECRET_KEY')
+            
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels_redis.core.RedisChannelLayer",
+        "CONFIG": {
+            "hosts": [("127.0.0.1", 6379)],
+        },
+    },
+}
+
+SESSION_ENGINE = 'django.contrib.sessions.backends.file'

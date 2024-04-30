@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import PaymentAPI
-
+from .views import create_checkout_session
 urlpatterns = [
-    path('make_payment/', PaymentAPI.as_view(), name='make_payment')
+   path('api/create-checkout-session/', create_checkout_session, name='create_checkout_session'),
+   
 ]

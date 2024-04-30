@@ -1,79 +1,74 @@
+# views.py
 import stripe
+from django.http import HttpResponse
+
 from django.conf import settings
-from rest_framework.views import APIView
+from rest_framework.decorators import api_view
 from rest_framework.response import Response
-from rest_framework import status
-from .serializers import CardInformationSerializer
+from .serializers import StripeCheckoutSerializer
 from drf_yasg.utils import swagger_auto_schema
-import os 
+from rest_framework import status
 
+stripe.api_key = settings.STRIPE_SECRET_KEY
 
-
-
-class PaymentAPI(APIView):
-    serializer_class = CardInformationSerializer
-    @swagger_auto_schema(request_body= CardInformationSerializer)
-    def post(self, request):
-        serializer = self.serializer_class(data=request.data)
-        response = {}  # Initialize the response dictionary
-        if serializer.is_valid():
-            data_dict = serializer.validated_data
-            
-            # Set the Stripe API key from settings
-            stripe.api_key = os.environ.get('STRIPE_SECRET_KEY')
-            
-            # Call the stripe_card_payment method and assign its response to response dictionary
-            response = self.stripe_card_payment(data_dict=data_dict)
-        else:
-            # If serializer is not valid, construct error response
-            response = {'errors': serializer.errors, 'status': status.HTTP_400_BAD_REQUEST}
-                
-        # Return the constructed response
-        return Response(response)
-
-    def stripe_card_payment(self, data_dict):
+@swagger_auto_schema(method='post', request_body=StripeCheckoutSerializer)
+@api_view(['POST'])
+def create_checkout_session(request):
+    serializer = StripeCheckoutSerializer(data=request.data)
+    if serializer.is_valid():
         try:
-            card_details = {
-                'number': data_dict['card_number'],
-                'exp_month': data_dict['expiry_month'],
-                'exp_year': data_dict['expiry_year'],
-                'cvc': data_dict['cvc'],
-            }
+            # Create customer with required name and address information
+            customer_email = serializer.validated_data.get('customer_email')
+            customer_name = serializer.validated_data.get('customer_name')
+            customer_address = serializer.validated_data.get('customer_address')
 
-            # Create a PaymentIntent
-            payment_intent = stripe.PaymentIntent.create(
-                amount=10000, 
-                currency='inr',
-                payment_method_types=['card'],  # Specify accepted payment method types
-                confirm=True,  # Automatically confirm the payment intent
-                payment_method=card_details  # Pass the card details directly
+            customer = stripe.Customer.create(
+                email=customer_email,
+                name=customer_name ,
+                address={
+                    'city':'dfdfssf',
+                    'country':'us',
+                    'line1':"fdfsfsf",
+                    'postal_code':695126,
+                    'state':"kerela",
+                    'line2':'fdsfsdfdsf'
+
+                }
             )
             
-            # Check if payment succeeded
-            if payment_intent.status == 'succeeded':
-                response = {
-                    'message': "Card Payment Success",
-                    'status': status.HTTP_200_OK,
-                    "payment_intent": payment_intent
-                }
-            else:
-                response = {
-                    'message': "Card Payment Failed",
-                    'status': status.HTTP_400_BAD_REQUEST,
-                    "payment_intent": payment_intent
-                }
-        except stripe.error.CardError as e:
-            # Handle card errors
-            response = {
-                'error': str(e),
-                'status': status.HTTP_400_BAD_REQUEST,
-                "payment_intent": {"id": "Null"},
-            }
+            # Fetch the customer object again to ensure we have the latest version
+        
+            
+
+            # Create checkout session using the customer ID
+            session = stripe.checkout.Session.create(
+                payment_method_types=['card'],
+                customer=customer.id,
+                line_items=[{
+                    'price_data': {
+                        'currency': serializer.validated_data.get('currency', 'usd'),
+                        'product_data': {
+                            'name': serializer.validated_data['product_name'],
+                        },
+                        'unit_amount': serializer.validated_data['unit_amount'],
+                    },
+                    'quantity': 1,
+                }],
+                mode='payment',
+                success_url=serializer.validated_data['success_url'],
+                cancel_url=serializer.validated_data['cancel_url'],
+                metadata={
+                    'customer_name': customer_name,
+                    'customer_address': customer_address,
+                },
+            )
+            return Response({'session_id': session.url})
         except Exception as e:
-            # Handle other exceptions
-            response = {
-                'error': str(e),
-                'status': status.HTTP_400_BAD_REQUEST,
-                "payment_intent": {"id": "Null"},
-            }
-        return response
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
+    else:
+        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+
+    
+    

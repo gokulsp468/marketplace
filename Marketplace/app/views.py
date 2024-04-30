@@ -14,92 +14,16 @@ from drf_yasg import openapi
 from rest_framework.viewsets import ModelViewSet
 from rest_framework.decorators import api_view, renderer_classes
 from .renderer import CustomJSONRenderer
+from django.core.exceptions import ValidationError
+from django.contrib import messages
+from django.shortcuts import get_object_or_404
+from rest_framework_simplejwt.tokens import RefreshToken
+
 # Create your views here.
+import logging
+# Get an instance of a logger
+logger = logging.getLogger(__name__)
 
-
-# @permission_classes([IsAuthenticated])
-# class ProductsView(APIView):
-#     @swagger_auto_schema(
-#         manual_parameters=[
-#             openapi.Parameter('sort_by', openapi.IN_QUERY, description="Field to sort by", type=openapi.TYPE_STRING),
-#             openapi.Parameter('sort_order', openapi.IN_QUERY, description="Sort order (asc or desc)", type=openapi.TYPE_STRING),
-#             openapi.Parameter('search', openapi.IN_QUERY, description="Search query", type=openapi.TYPE_STRING),
-#         ]
-#     )
-#     def get(self, request):
-#         if not request.user.is_authenticated :
-#             return Response({'error': 'Unauthorized'}, status=status.HTTP_401_UNAUTHORIZED)
-#         if request.user.user_type == 'seller' or request.user.user_type == 'customer':
-#             product_list = models.Products.objects.filter(user=request.user).all()
-#         elif request.user.user_type == 'admin':
-#             product_list = models.Products.objects.all()
-            
-#         sort_by = request.GET.get('sort_by', 'product_title')
-#         sort_order = request.GET.get('sort_order', 'asc')
-#         search_query = request.GET.get('search', '').strip()
-#         if search_query:
-#             product_list = product_list.filter(
-#                 Q(product_title__icontains=search_query) |
-#                 Q(product_description__icontains=search_query) |
-#                 Q(product_price__icontains=search_query)
-#             )
-
-#         if sort_order == 'asc':
-#             product_list = product_list.order_by(sort_by)
-#         else:
-#             product_list = product_list.order_by(f'-{sort_by}')
-
-#         serializer = serializers.ProductSerializer(product_list, many=True)
-#         return Response(serializer.data)
-    
-#     @swagger_auto_schema(
-#         request_body=serializers.ProductSerializer
-#     )
-#     def post(self, request):
-#         serializer = serializers.ProductSerializer(data = request.data, context = {'request':request})
-#         try:
-#             if serializer.is_valid():
-#                 serializer.save()
-#                 return Response({'data':serializer.data,'message': 'Product added successfully'}, status=status.HTTP_201_CREATED)
-#             else:
-#                 return Response({'errors': "failed"}, status=status.HTTP_400_BAD_REQUEST)
-#         except Exception as e:
-#             return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-    
-# @permission_classes([IsAuthenticated])   
-# class ProductPatch(APIView):
-    # @swagger_auto_schema(
-    #     request_body=serializers.ProductSerializer,
-        
-    # )
-        
-    # def patch(self, request, pk):
-    #     product = models.Products.objects.get(pk=pk)
-    #     if product.user != request.user:
-    #         return Response({'error': 'You do not have permission to edit this product'}, status=status.HTTP_403_FORBIDDEN)
-        
-    #     serializer = serializers.ProductSerializer(product, data=request.data, partial=True)
-    #     try:
-    #         if serializer.is_valid():
-    #             serializer.save()
-    #             return Response({'message': 'Product updated successfully'}, status=status.HTTP_200_OK)
-    #         else:
-    #             return Response({'errors': serializer.errors}, status=status.HTTP_400_BAD_REQUEST)
-    #     except Exception as e:
-    #         return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
-        
-    # @swagger_auto_schema(
-    #     manual_parameters=[
-    #         openapi.Parameter('id', openapi.IN_PATH, description="ID of the product to delete", type=openapi.TYPE_INTEGER)]
-    # )
-    # def delete(self, request, pk):
-    #     try:
-    #         product = models.Products.objects.get(pk=pk)
-    #     except models.Products.DoesNotExist:
-    #         return Response({'error': 'Product not found'}, status=status.HTTP_404_NOT_FOUND)
-
-    #     product.delete()
-    #     return Response(status=status.HTTP_204_NO_CONTENT)
 
 
 class ProductsViewSet(ModelViewSet):
@@ -109,12 +33,14 @@ class ProductsViewSet(ModelViewSet):
 
     def get_queryset(self):
         user = self.request.user
+        logger.debug("Fetching queryset for user: %s", user.username)
         if user.is_authenticated:
             if user.user_type == 'admin' or user.user_type == 'customer':
                 return models.Products.objects.all()
             else:
                 return models.Products.objects.filter(user=user)
         else:
+            logger.warning("Unauthenticated access attempted.")
             return models.Products.objects.none()
 
     @swagger_auto_schema(
@@ -126,7 +52,8 @@ class ProductsViewSet(ModelViewSet):
     )
     def list(self, request, *args, **kwargs):
         queryset = self.filter_queryset(self.get_queryset())
-
+        logger.debug("Listing products, total count: %d", queryset.count())
+       
         sort_by = request.query_params.get('sort_by', 'product_title')
         sort_order = request.query_params.get('sort_order', 'asc')
         search_query = request.query_params.get('search', '').strip()
@@ -277,4 +204,153 @@ def cart_list(request):
  
 
 
+########################################################################################################################
 
+def chat(request):
+    refresh = RefreshToken.for_user(request.user)
+    
+    if request.user.user_type == 'admin':
+        chats = models.Chat.objects.all()
+        return render(request, 'adminchatbox.html',{'chats':chats,'token':refresh.access_token})
+               
+    return render(request, 'socket.html',{'token':refresh.access_token})
+
+
+def supportChat(request,roomName):
+    return render(request, 'supportchat.html',{'roomName':roomName,'sender':request.user})
+    
+    
+
+def DashBoard(request):
+
+    product_list = None
+    sort_by = request.GET.get('sort_by', 'product_title') 
+    sort_order = request.GET.get('sort_order', 'asc')  
+    add_product_form = forms.AddProduct()
+    if request.method == 'POST':
+        # Accessing form data sent via POST
+        search_query = request.POST.get('search','').strip()  
+        if search_query:
+           
+           product_list = models.Products.objects.filter(
+                Q(product_title__icontains=search_query) |
+                Q(product_description__icontains=search_query) |
+                Q(product_price__icontains=search_query)
+            )
+        else:
+            if request.user.user_type == 'customer':
+                product_list = models.Products.objects.all() 
+            else:
+                product_list = models.Products.objects.filter(user=request.user).all() 
+    
+    else:
+        print(request.user.user_type)
+        if request.user.user_type == 'customer':
+            product_list = models.Products.objects.all() 
+        else:
+            product_list = models.Products.objects.filter(user=request.user).all() 
+        if sort_order == 'asc':
+            product_list = product_list.order_by(sort_by)
+        else:
+            product_list = product_list.order_by(f'-{sort_by}')
+        
+    
+    return render(request, 'dashboard.html', {'user': request.user, 'add_product_form': add_product_form, 'product_list':product_list})
+    
+def SignUp(request):
+    
+    if request.method == 'POST':
+        
+        form = forms.CustomUserCreationForm(request.POST)
+       
+        if form.is_valid():
+            try:
+                username = form.cleaned_data['first_name'] + form.cleaned_data['last_name']
+                email = form.cleaned_data['email']
+                if models.CustomUser.objects.filter(username=username).exists():
+                    raise ValidationError("username already exist")
+                if models.CustomUser.objects.filter(email=email).exists():
+                    raise ValidationError("email already exist")
+                print(form.cleaned_data['first_name'] + form.cleaned_data['last_name'])
+                user = form.save(commit=False)
+                user.username = form.cleaned_data['first_name'] + form.cleaned_data['last_name']
+                form.save()
+                
+                return redirect('signUp')
+            except Exception as e:
+                messages.error(request, e)
+        else:
+            return render(request, 'login.html',{'signUp_form':form})
+    else:
+        form = forms.CustomUserCreationForm()
+    return render(request, 'login.html',{'signUp_form':form})
+
+def LoginUsr(request):
+    if request.method == 'POST':
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        user = authenticate(request, username=username, password=password)
+        if user is not None:
+            login(request, user)
+            
+            return redirect('dashboard')  
+        else:
+            
+            messages.error(request, 'Invalid username or password.')
+   
+    return render(request, 'login.html')
+
+
+def logout_view(request):
+    logout(request)
+    return redirect('signUp')
+
+
+def add_products(request):
+    if request.method == "POST":
+        add_product_form = forms.AddProduct(request.POST, request.FILES)
+        
+        try:
+    
+            if add_product_form.is_valid():
+                
+                add_product = add_product_form.save(commit=False)
+                add_product.user = request.user
+                add_product.save()
+                return redirect('dashboard')
+            else:
+                raise ValidationError(add_product_form.errors) 
+        except Exception as e:
+            messages.error(request,e)
+    else:
+        return redirect('dashboard')
+    
+    
+def edit_product(request ,id):
+    if request.method == "POST":
+        product = get_object_or_404(models.Products, id=id)
+        print(product)
+        add_product_form = forms.AddProduct(request.POST, request.FILES, instance=product)
+        try:
+            
+            if add_product_form.is_valid():
+                
+                add_product_form.save()
+                messages.success(request,"successfully edited")
+                return redirect('dashboard')
+            else:
+               raise ValidationError(add_product_form.errors) 
+        except Exception as e:
+            messages.error(request,e)
+    else:
+        return redirect('dashboard')
+    return redirect('dashboard')
+
+def delete_product(request, id):
+    if request.method == "POST":
+        product = get_object_or_404(models.Products, id=id)
+        product.delete()
+        messages.success(request,"deleted successfully")
+        
+        
+    return redirect('dashboard')

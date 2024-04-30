@@ -17,6 +17,6 @@ app.autodiscover_tasks()
 app.conf.beat_schedule = {
     'send-email-to-cart-owners-daily': {
         'task': 'app.tasks.send_email_to_cart_owners',
-        'schedule': crontab(hour=11, minute=11),  # Runs daily at 9 AM
+        'schedule': crontab(hour=8, minute=28),  # Runs daily at 9 AM
     },
 }

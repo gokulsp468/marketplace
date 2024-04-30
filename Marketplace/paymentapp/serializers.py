@@ -1,44 +1,19 @@
-import datetime
-
+# serializers.py
 from rest_framework import serializers
 
+class StripeCheckoutSerializer(serializers.Serializer):
+    product_name = serializers.CharField(max_length=100)
+    unit_amount = serializers.IntegerField()
+    currency = serializers.CharField(max_length=3, default='usd')
+    success_url = serializers.URLField()
+    cancel_url = serializers.URLField()
+    customer_email = serializers.EmailField()
+    customer_name = serializers.CharField(max_length=255)  # Field for customer name
+    customer_address = serializers.CharField(max_length=255)  # Field for customer address
 
-def check_expiry_month(value):
-    if not 1 <= int(value) <= 12:
-        raise serializers.ValidationError("Invalid expiry month.")
+    def create(self, validated_data):
+        # You can handle the Stripe session creation logic here
+        # Use the validated data to create the checkout session with Stripe
+        # Return the session ID or any relevant data
+        return validated_data
 
-
-def check_expiry_year(value):
-    today = datetime.datetime.now()
-    if not int(value) >= today.year:
-        raise serializers.ValidationError("Invalid expiry year.")
-
-
-def check_cvc(value):
-    if not 3 <= len(value) <= 4:
-        raise serializers.ValidationError("CVC must be 3 or 4 digits long.")
-
-
-def check_payment_method(value):
-    payment_method = value.lower()
-    if payment_method not in ["card"]:
-        raise serializers.ValidationError("Invalid payment method.")
-
-
-class CardInformationSerializer(serializers.Serializer):
-    card_number = serializers.CharField(max_length=150, required=True)
-    expiry_month = serializers.CharField(
-        max_length=150,
-        required=True,
-        validators=[check_expiry_month],
-    )
-    expiry_year = serializers.CharField(
-        max_length=150,
-        required=True,
-        validators=[check_expiry_year],
-    )
-    cvc = serializers.CharField(
-        max_length=150,
-        required=True,
-        validators=[check_cvc],
-    )
